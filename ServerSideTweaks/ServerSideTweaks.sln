@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31919.166
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ServerSideTweaks", "ServerSideTweaks.csproj", "{179EF22B-C2ED-418B-8D16-11127331E55E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{179EF22B-C2ED-418B-8D16-11127331E55E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{179EF22B-C2ED-418B-8D16-11127331E55E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{179EF22B-C2ED-418B-8D16-11127331E55E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{179EF22B-C2ED-418B-8D16-11127331E55E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {7AD3923F-2586-47FD-9830-9EB45844CBC1}
+	EndGlobalSection
+EndGlobal
