@@ -23,7 +23,7 @@ namespace ServerSideTweaks
     {
         public const string GUID = "com.RegalTurtle.ServerSideTweaks";
         public const string Name = "Server Side Tweaks";
-        public const string Version = "1.1.0";
+        public const string Version = "1.1.1";
 
         private static int runMountainCount = 0;
         private static int stageMountainCount = 0;
