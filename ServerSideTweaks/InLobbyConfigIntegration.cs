@@ -34,7 +34,8 @@ namespace ServerSideTweaks
             {
                 ConfigFieldUtilities.CreateFromBepInExConfigEntry(ServerSideTweaksPlugin.ArroganceEnabled),
                 ConfigFieldUtilities.CreateFromBepInExConfigEntry(ServerSideTweaksPlugin.AddedMountainShrinesPerStage),
-                ConfigFieldUtilities.CreateFromBepInExConfigEntry(ServerSideTweaksPlugin.MultMountainShrinesPerStage)
+                ConfigFieldUtilities.CreateFromBepInExConfigEntry(ServerSideTweaksPlugin.MultMountainShrinesPerStage),
+                ConfigFieldUtilities.CreateFromBepInExConfigEntry(ServerSideTweaksPlugin.MountainShrinesChallengeMode)
             };
 
             modConfig.SectionFields["Infinite Mountain Shrines"] = new List<IConfigField>

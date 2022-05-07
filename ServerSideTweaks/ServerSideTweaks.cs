@@ -23,7 +23,7 @@ namespace ServerSideTweaks
     {
         public const string GUID = "com.RegalTurtle.ServerSideTweaks";
         public const string Name = "Server Side Tweaks";
-        public const string Version = "1.0.0";
+        public const string Version = "1.1.0";
 
         private static int runMountainCount = 0;
         private static int stageMountainCount = 0;
@@ -35,6 +35,7 @@ namespace ServerSideTweaks
         internal static ConfigEntry<bool> ArroganceEnabled { get; set; }
         internal static ConfigEntry<int> AddedMountainShrinesPerStage { get; set; }
         internal static ConfigEntry<int> MultMountainShrinesPerStage { get; set; }
+        internal static ConfigEntry<bool> MountainShrinesChallengeMode { get; set; }
 
         internal static ConfigEntry<bool> InfiniteMountainEnabled { get; set; }
         internal static ConfigEntry<int> InfiniteMountainPurchaseLimit { get; set; }
@@ -47,6 +48,7 @@ namespace ServerSideTweaks
             ArroganceEnabled = Config.Bind("ArtifactOfArrogance", nameof(ArroganceEnabled), true, "Is Artifact of Arrogance enabled");
             AddedMountainShrinesPerStage = Config.Bind("ArtifactOfArrogance", nameof(AddedMountainShrinesPerStage), 0, "How many mountain shrines to add per stage");
             MultMountainShrinesPerStage = Config.Bind("ArtifactOfArrogance", nameof(MultMountainShrinesPerStage), 1, "How many times to multiply mountain shrines each stage");
+            MountainShrinesChallengeMode = Config.Bind("ArtifactOfArrogance", nameof(MountainShrinesChallengeMode), false, "Enable challenge mode, where added mountain shrines only give 1 item");
 
             InfiniteMountainEnabled = Config.Bind("InfiniteMountain", nameof(InfiniteMountainEnabled), true, "Is infinite mountain shrines enabled");
             InfiniteMountainPurchaseLimit = Config.Bind("InfiniteMountain", nameof(InfiniteMountainPurchaseLimit), 1, "How many times can you hit 1 mountain shrine");
@@ -63,12 +65,12 @@ namespace ServerSideTweaks
         {
             On.RoR2.ShrineBossBehavior.AddShrineStack += (orig, self, interactor) =>
             {
-                if (ArroganceEnabled.Value)
+                if (IsEnabled.Value && ArroganceEnabled.Value)
                 {
                     stageMountainCount++;
                 }
 
-                if (InfiniteMountainEnabled.Value)
+                if (IsEnabled.Value && InfiniteMountainEnabled.Value)
                 {
                     self.GetComponent<ShrineBossBehavior>().maxPurchaseCount = InfiniteMountainPurchaseLimit.Value;
                 }
@@ -91,7 +93,7 @@ namespace ServerSideTweaks
 
             On.RoR2.Stage.Start += (orig, self) =>
             {
-                if (ArroganceEnabled.Value)
+                if (IsEnabled.Value && ArroganceEnabled.Value)
                 {
                     runMountainCount += (stageMountainCount + AddedMountainShrinesPerStage.Value) * MultMountainShrinesPerStage.Value;
                     stageMountainCount = 0;
@@ -101,7 +103,14 @@ namespace ServerSideTweaks
                     {
                         for (int i = 0; i < runMountainCount; i++)
                         {
-                            TeleporterInteraction.instance.AddShrineStack();
+                            if (MountainShrinesChallengeMode.Value)
+                            {
+                                TeleporterInteraction.instance.shrineBonusStacks++;
+                            }
+                            else
+                            {
+                                TeleporterInteraction.instance.AddShrineStack();
+                            }
                         }
                     }
                 }
