@@ -19,16 +19,19 @@ namespace ServerSideTweaks
     [BepInPlugin(GUID, Name, Version)]
     [BepInDependency("com.bepis.r2api")]
     [R2API.Utils.R2APISubmoduleDependency(nameof(LanguageAPI), nameof(RecalculateStatsAPI), nameof(ItemAPI), nameof(EliteAPI), nameof(ContentAddition))]
+
     public class ServerSideTweaksPlugin : BaseUnityPlugin
     {
         public const string GUID = "com.RegalTurtle.ServerSideTweaks";
         public const string Name = "Server Side Tweaks";
-        public const string Version = "1.1.1";
+        public const string Version = "1.1.2";
+
+        private static readonly MethodInfo startRun = typeof(PreGameController).GetMethod(nameof(PreGameController.StartRun), BindingFlags.NonPublic | BindingFlags.Instance);
 
         private static int runMountainCount = 0;
         private static int stageMountainCount = 0;
 
-        private static readonly HashSet<NetworkUser> votedForMetamorphosis = new HashSet<NetworkUser>();
+        private static readonly HashSet<NetworkUser> votedForCommand = new HashSet<NetworkUser>();
 
         internal static ConfigEntry<bool> IsEnabled { get; set; }
 
@@ -52,6 +55,8 @@ namespace ServerSideTweaks
 
             InfiniteMountainEnabled = Config.Bind("InfiniteMountain", nameof(InfiniteMountainEnabled), true, "Is infinite mountain shrines enabled");
             InfiniteMountainPurchaseLimit = Config.Bind("InfiniteMountain", nameof(InfiniteMountainPurchaseLimit), 1, "How many times can you hit 1 mountain shrine");
+
+            HookEndpointManager.Add(startRun, (Action<Action<PreGameController>, PreGameController>)PreGameControllerStartRun);
 
             InLobbyConfigIntegration.OnStart();
         }
@@ -115,6 +120,23 @@ namespace ServerSideTweaks
                     }
                 }
             };
+        }
+
+        private static void PreGameControllerStartRun(Action<PreGameController> orig, PreGameController self)
+        {
+            votedForCommand.Clear();
+            var choice = RuleCatalog.FindChoiceDef("Artifacts.RandomSurvivorOnRespawn.On");
+            foreach (var user in NetworkUser.readOnlyInstancesList)
+            {
+                var voteController = PreGameRuleVoteController.FindForUser(user);
+                var isMetamorphosisVoted = voteController.IsChoiceVoted(choice);
+
+                if (isMetamorphosisVoted)
+                {
+                    votedForCommand.Add(user);
+                }
+            }
+            orig(self);
         }
     }
 }
