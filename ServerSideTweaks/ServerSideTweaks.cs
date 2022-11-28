@@ -11,6 +11,13 @@ using System.Reflection;
 using System.Security.Permissions;
 using R2API;
 
+using UnityEngine.Networking;
+using PickupIndex = RoR2.PickupIndex;
+using CommandArtifactManager = RoR2.Artifacts.CommandArtifactManager;
+using PickupTransmutationManager = RoR2.PickupTransmutationManager;
+using PickupDropletController = RoR2.PickupDropletController;
+using UnityEngine.XR;
+
 [assembly: SecurityPermission(SecurityAction.RequestMinimum, SkipVerification = true)]
 [assembly: AssemblyVersion(ServerSideTweaks.ServerSideTweaksPlugin.Version)]
 namespace ServerSideTweaks
@@ -31,7 +38,9 @@ namespace ServerSideTweaks
         private static int runMountainCount = 0;
         private static int stageMountainCount = 0;
 
-        private static readonly HashSet<NetworkUser> votedForCommand = new HashSet<NetworkUser>();
+        private static Interactor lastInteractor = null;
+
+        private static readonly HashSet<String> votedForCommand = new HashSet<String>();
 
         internal static ConfigEntry<bool> IsEnabled { get; set; }
 
@@ -56,7 +65,7 @@ namespace ServerSideTweaks
             InfiniteMountainEnabled = Config.Bind("InfiniteMountain", nameof(InfiniteMountainEnabled), true, "Is infinite mountain shrines enabled");
             InfiniteMountainPurchaseLimit = Config.Bind("InfiniteMountain", nameof(InfiniteMountainPurchaseLimit), 1, "How many times can you hit 1 mountain shrine");
 
-            HookEndpointManager.Add(startRun, (Action<Action<PreGameController>, PreGameController>)PreGameControllerStartRun);
+            /* HookEndpointManager.Add(startRun, (Action<Action<PreGameController>, PreGameController>)PreGameControllerStartRun); */
 
             InLobbyConfigIntegration.OnStart();
         }
@@ -85,12 +94,18 @@ namespace ServerSideTweaks
 
             On.RoR2.Run.Start += (orig, self) =>
             {
-                runMountainCount = 0;
-                stageMountainCount = 0;
-
-                if (InfiniteMountainPurchaseLimit.Value < 0 || InfiniteMountainPurchaseLimit.Value > 2147483647)
+                if (IsEnabled.Value && ArroganceEnabled.Value)
                 {
-                    InfiniteMountainPurchaseLimit.Value = 2147483647;
+                    runMountainCount = 0;
+                    stageMountainCount = 0;
+                }
+
+                if(IsEnabled.Value && InfiniteMountainEnabled.Value)
+                {
+                    if (InfiniteMountainPurchaseLimit.Value < 0 || InfiniteMountainPurchaseLimit.Value > 2147483647)
+                    {
+                        InfiniteMountainPurchaseLimit.Value = 2147483647;
+                    }
                 }
 
                 orig(self);
@@ -118,25 +133,108 @@ namespace ServerSideTweaks
                             }
                         }
                     }
+                } else
+                {
+                    orig(self);
                 }
             };
+
+            /*On.RoR2.PurchaseInteraction.OnInteractionBegin += (orig, self, interactor) =>
+            {
+                lastInteractor = interactor;
+                orig(self, interactor);
+            };*/
+
+            /*On.RoR2.Artifacts.CommandArtifactManager.OnDropletHitGroundServer += (orig, self, createPickupInfo, shouldSpawn) =>
+            {
+                if (votedForCommand.Contains(lastInteractor.netIdentity))
+                {
+                    RoR2.Artifacts.CommandArtifactManager.OnDropletHitGroundServer(orig, self, createPickupInfo, shouldSpawn);
+                }
+                else
+                {
+                    orig(self, createPickupInfo, shouldSpawn);
+                }
+            };*/
+
+            /*On.RoR2.PickupDropletController.PickupDropletHitGroundDelegate.Invoke += (RoR2.PickupDropletController.PickupDropletHitGroundDelegate.orig_Invoke orig, RoR2.PickupDropletController.PickupDropletHitGroundDelegate self, ref GenericPickupController.CreatePickupInfo createPickupInfo, ref bool shouldSpawn) =>
+            {
+                if (votedForCommand.Contains(lastInteractor.netIdentity))
+                {
+                    RoR2.Artifacts.CommandArtifactManager.OnDropletHitGroundServer(orig, self, createPickupInfo, shouldSpawn);
+                }
+                else
+                {
+                    orig(self, createPickupInfo, shouldSpawn);
+                }
+            };*/
+
+            /*On.RoR2.Artifacts.CommandArtifactManager.OnArtifactEnabled += (orig, self, artifactDef) =>
+            {
+                if (artifactDef != CommandArtifactManager.myArtifact)
+	            {
+		            return;
+	            }
+	            if (NetworkServer.active)
+	            {
+		            //PickupDropletController.onDropletHitGroundServer += CommandArtifactManager.OnDropletHitGroundServer;
+		            SceneDirector.onGenerateInteractableCardSelection += CommandArtifactManager.OnGenerateInteractableCardSelection;
+	            }
+            };
+
+            On.RoR2.Artifacts.CommandArtifactManager.OnArtifactDisabled += (orig, self, artifactDef) =>
+            {
+                if (artifactDef != CommandArtifactManager.myArtifact)
+	            {
+		            return;
+	            }
+	            SceneDirector.onGenerateInteractableCardSelection -= CommandArtifactManager.OnGenerateInteractableCardSelection;
+	            //PickupDropletController.onDropletHitGroundServer -= CommandArtifactManager.OnDropletHitGroundServer;
+            };*/
+
+            /*On.RoR2.Artifacts.CommandArtifactManager.OnDropletHitGroundServer += (On.RoR2.Artifacts.CommandArtifactManager.orig_OnDropletHitGroundServer orig, ref GenericPickupController.CreatePickupInfo createPickupInfo, ref bool shouldSpawn) =>
+            {
+                Chat.AddMessage(lastInteractor.netIdentity.ToString());
+                Chat.AddMessage(lastInteractor.netId.ToString());
+                Chat.AddMessage(lastInteractor.netIdentity.name.ToString());
+
+                //foreach (string s in votedForCommand)
+                //{
+                //    Chat.AddMessage(s);
+                //}
+                if(votedForCommand.Contains(lastInteractor.netIdentity.ToString()))
+                {
+                    //Chat.AddMessage("Spawning Command Orb");
+                    orig(ref createPickupInfo, ref shouldSpawn);
+                    //RoR2.Artifacts.CommandArtifactManager.OnDropletHitGroundServer(ref createPickupInfo, ref shouldSpawn);
+                }
+                else
+                {
+                    //Chat.AddMessage("Spawning Item");
+                    orig(ref createPickupInfo, ref shouldSpawn);
+                    //RoR2.Artifacts.CommandArtifactManager.OnDropletHitGroundServer(ref createPickupInfo, ref shouldSpawn);
+                }
+            };*/
         }
 
-        private static void PreGameControllerStartRun(Action<PreGameController> orig, PreGameController self)
+        /*private static void PreGameControllerStartRun(Action<PreGameController> orig, PreGameController self)
         {
             votedForCommand.Clear();
-            var choice = RuleCatalog.FindChoiceDef("Artifacts.RandomSurvivorOnRespawn.On");
+            var choice = RuleCatalog.FindChoiceDef("Artifacts.Command.On");
             foreach (var user in NetworkUser.readOnlyInstancesList)
             {
                 var voteController = PreGameRuleVoteController.FindForUser(user);
-                var isMetamorphosisVoted = voteController.IsChoiceVoted(choice);
+                var isCommandVoted = voteController.IsChoiceVoted(choice);
 
-                if (isMetamorphosisVoted)
+                if (isCommandVoted)
                 {
-                    votedForCommand.Add(user);
+                    votedForCommand.Add(user.netIdentity.ToString());
+                    Chat.AddMessage(user.netIdentity.ToString());
+                    Chat.AddMessage(user.netId.ToString());
+                    Chat.AddMessage(user.NetworkuserColor.ToString());
                 }
             }
             orig(self);
-        }
+        }*/
     }
 }
