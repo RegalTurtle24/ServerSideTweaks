@@ -31,7 +31,7 @@ namespace ServerSideTweaks
     {
         public const string GUID = "com.RegalTurtle.ServerSideTweaks";
         public const string Name = "Server Side Tweaks";
-        public const string Version = "1.1.2";
+        public const string Version = "1.1.4";
 
         private static readonly MethodInfo startRun = typeof(PreGameController).GetMethod(nameof(PreGameController.StartRun), BindingFlags.NonPublic | BindingFlags.Instance);
 
