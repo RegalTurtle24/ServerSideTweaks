@@ -220,15 +220,15 @@ namespace ServerSideTweaks
         private static void CharacterMasterRespawn(ILContext il)
         {
             var c = new ILCursor(il);
-            c.GotoNext(x => x.MatchCall(typeof(RoR2Content.Artifacts), "get_randomSurvivorOnRespawnArtifactDef"));
+            c.GotoNext(x => x.MatchCall(typeof(RoR2Content.Artifacts), "get_commandArtifactDef"));
             c.Index += 3;
             var endIf = c.Previous.Operand;
             c.Emit(OpCodes.Ldarg_0);
-            c.EmitDelegate<Func<CharacterMaster, bool>>(ShouldChangeCharacter);
+            c.EmitDelegate<Func<CharacterMaster, bool>>(ShouldDropCommand);
             c.Emit(OpCodes.Brfalse_S, endIf);
         }
 
-        public static bool ShouldChangeCharacter(CharacterMaster master)
+        public static bool ShouldDropCommand(CharacterMaster master)
         {
             return !IsEnabled.Value || votedForCommand.Any(el => el.master == master);
         }
