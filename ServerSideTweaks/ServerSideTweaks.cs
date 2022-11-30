@@ -65,7 +65,7 @@ namespace ServerSideTweaks
             InfiniteMountainEnabled = Config.Bind("InfiniteMountain", nameof(InfiniteMountainEnabled), true, "Is infinite mountain shrines enabled");
             InfiniteMountainPurchaseLimit = Config.Bind("InfiniteMountain", nameof(InfiniteMountainPurchaseLimit), 1, "How many times can you hit 1 mountain shrine");
 
-            /* HookEndpointManager.Add(startRun, (Action<Action<PreGameController>, PreGameController>)PreGameControllerStartRun); */
+            HookEndpointManager.Add(startRun, (Action<Action<PreGameController>, PreGameController>)PreGameControllerStartRun);
 
             InLobbyConfigIntegration.OnStart();
         }
@@ -217,7 +217,23 @@ namespace ServerSideTweaks
             };*/
         }
 
-        /*private static void PreGameControllerStartRun(Action<PreGameController> orig, PreGameController self)
+        private static void CharacterMasterRespawn(ILContext il)
+        {
+            var c = new ILCursor(il);
+            c.GotoNext(x => x.MatchCall(typeof(RoR2Content.Artifacts), "get_randomSurvivorOnRespawnArtifactDef"));
+            c.Index += 3;
+            var endIf = c.Previous.Operand;
+            c.Emit(OpCodes.Ldarg_0);
+            c.EmitDelegate<Func<CharacterMaster, bool>>(ShouldChangeCharacter);
+            c.Emit(OpCodes.Brfalse_S, endIf);
+        }
+
+        public static bool ShouldChangeCharacter(CharacterMaster master)
+        {
+            return !IsEnabled.Value || votedForCommand.Any(el => el.master == master);
+        }
+
+        private static void PreGameControllerStartRun(Action<PreGameController> orig, PreGameController self)
         {
             votedForCommand.Clear();
             var choice = RuleCatalog.FindChoiceDef("Artifacts.Command.On");
@@ -229,12 +245,12 @@ namespace ServerSideTweaks
                 if (isCommandVoted)
                 {
                     votedForCommand.Add(user.netIdentity.ToString());
-                    Chat.AddMessage(user.netIdentity.ToString());
+                    /*Chat.AddMessage(user.netIdentity.ToString());
                     Chat.AddMessage(user.netId.ToString());
-                    Chat.AddMessage(user.NetworkuserColor.ToString());
+                    Chat.AddMessage(user.NetworkuserColor.ToString());*/
                 }
             }
             orig(self);
-        }*/
+        }
     }
 }
